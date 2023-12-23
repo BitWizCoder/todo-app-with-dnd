@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useDrag } from "react-dnd";
+import { useDrag, useDrop } from "react-dnd";
 import toast from "react-hot-toast";
 
 function ListTasks({ tasks, setTasks }) {
@@ -39,6 +39,14 @@ function ListTasks({ tasks, setTasks }) {
 export default ListTasks;
 
 function Section({ status, tasks, setTasks, todos, doing, done }) {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: "task",
+    drop: (item) => addItemToSection(item.id),
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+    }),
+  }));
+
   let text = "Todo";
   let bg = "bg-slate-500";
 
@@ -52,8 +60,29 @@ function Section({ status, tasks, setTasks, todos, doing, done }) {
     (text = "Done"), (bg = "bg-green-500"), (tasksToMap = done);
   }
 
+  const addItemToSection = (id) => {
+    setTasks((prev) => {
+      const mTasks = prev.map((t) => {
+        if (t.id === id) {
+          return { ...t, status: status };
+        }
+
+        return t;
+      });
+
+      localStorage.setItem("tasks", JSON.stringify(mTasks));
+
+      toast.success("Task status changed.");
+
+      return mTasks;
+    });
+  };
+
   return (
-    <div className={`w-64`}>
+    <div
+      ref={drop}
+      className={`w-64 rounded-md p-2 ${isOver ? "bg-slate-200" : ""}`}
+    >
       <Header text={text} bg={bg} count={tasksToMap?.length} />
       {tasksToMap?.length > 0 &&
         tasksToMap?.map((task) => (
@@ -80,6 +109,7 @@ function Header({ text, bg, count }) {
 function Task({ task, tasks, setTasks }) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "task",
+    item: { id: task.id },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -92,11 +122,16 @@ function Task({ task, tasks, setTasks }) {
 
     setTasks(fTasks);
 
-    toast("Task Removed");
+    toast.error("Task Removed");
   };
 
   return (
-    <div className={`relative p-4 mt-8 shadow-md cursor-grab`}>
+    <div
+      ref={drag}
+      className={`relative p-4 mt-8 shadow-md cursor-grab ${
+        isDragging ? "opacity-25" : "opacity-100"
+      }`}
+    >
       <p>{task.name}</p>
       <button
         className="absolute bottom-1 right-1 text-slate-400"
