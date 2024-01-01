@@ -1,27 +1,29 @@
-import { useEffect, useState } from "react";
-import CreateTask from "./components/CreateTask";
-import ListTasks from "./components/ListTasks";
 import { Toaster } from "react-hot-toast";
 
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import Layout from "./pages/Layout";
+import Home from "./pages/Home";
+import { AuthProvider } from "./context/AuthConotext";
 
 function App() {
-  const [tasks, setTasks] = useState([]);
-
-  useEffect(() => {
-    setTasks(JSON.parse(localStorage.getItem("tasks")));
-  }, []);
-
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="bg-slate-100 h-screen flex flex-col items-center gap-16 pt-24">
-        <CreateTask tasks={tasks} setTasks={setTasks} />
-        <ListTasks tasks={tasks} setTasks={setTasks} />
-      </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
 
-      <Toaster />
-    </DndProvider>
+        <Toaster />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
